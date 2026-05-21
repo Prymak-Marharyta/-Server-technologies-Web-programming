@@ -31,11 +31,7 @@
   <p id="message"></p>
 
   <script>
-    const token = localStorage.getItem('token');
-
-    if (!token) {
-      window.location.href = '/login.html';
-    }
+    const API_URL = 'http://localhost:3000';
 
     document.getElementById('createForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -47,11 +43,11 @@
         category: document.getElementById('category').value
       };
 
-      const response = await fetch('/api/courses', {
+      const response = await fetch(`${API_URL}/api/courses`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(body)
       });
@@ -60,6 +56,13 @@
 
       if (!response.ok) {
         document.getElementById('message').textContent = data.message;
+
+        if (response.status === 401) {
+          setTimeout(() => {
+            window.location.href = '/login.html';
+          }, 1000);
+        }
+
         return;
       }
 

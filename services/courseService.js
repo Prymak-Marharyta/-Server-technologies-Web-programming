@@ -58,7 +58,6 @@ exports.updateCourse = async (id, data, currentUser) => {
   }
 
   const course = await Course.findById(id);
-
   if (!course) {
     throw new AppError('Курс не знайдено', 404);
   }

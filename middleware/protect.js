@@ -4,13 +4,19 @@ const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
 
 const protect = catchAsync(async (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  let token = req.cookies.token;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return next(new AppError('Доступ заборонено. Токен відсутній', 401));
+  if (!token) {
+    const authHeader = req.headers.authorization;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    }
   }
 
-  const token = authHeader.split(' ')[1];
+  if (!token) {
+    return next(new AppError('Доступ заборонено. Токен відсутній', 401));
+  }
 
   let decoded;
 
@@ -21,11 +27,7 @@ const protect = catchAsync(async (req, res, next) => {
       return next(new AppError('Термін дії токена вийшов. Увійдіть знову', 401));
     }
 
-    if (err.name === 'JsonWebTokenError') {
-      return next(new AppError('Невірний токен. Увійдіть знову', 401));
-    }
-
-    return next(err);
+    return next(new AppError('Невірний токен. Увійдіть знову', 401));
   }
 
   const user = await User.findById(decoded.id);
