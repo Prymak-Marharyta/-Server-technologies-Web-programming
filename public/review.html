@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Відгук</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 500px;
+      margin: 40px auto;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    input.error, textarea.error {
+      border: 2px solid red;
+    }
+
+    input.valid, textarea.valid {
+      border: 2px solid green;
+    }
+
+    #ratingError,
+    #commentError {
+      color: red;
+      font-size: 12px;
+      display: block;
+      min-height: 16px;
+    }
+
+    #serverErrors p {
+      color: red;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Залишити відгук</h1>
+
+<div id="serverErrors"></div>
+
+<form id="reviewForm">
+
+  <div class="field">
+    <input type="number" id="rating" min="1" max="5" placeholder="Оцінка (1–5)">
+    <span id="ratingError"></span>
+  </div>
+
+  <div class="field">
+    <textarea id="comment" rows="4" placeholder="Коментар (мінімум 10 символів)"></textarea>
+    <span id="commentError"></span>
+  </div>
+
+  <button type="submit">Надіслати</button>
+
+</form>
+
+<script>
+
+const API_URL = 'http://localhost:3000';
+
+const params = new URLSearchParams(window.location.search);
+const courseId = params.get('courseId');
+
+if (!courseId) {
+  window.location.href = '/index.html';
+}
+
+const ratingInput = document.getElementById('rating');
+const commentInput = document.getElementById('comment');
+
+function validateRating() {
+  const value = Number(ratingInput.value);
+
+  if (!value || value < 1 || value > 5) {
+    document.getElementById('ratingError').textContent =
+      'Оцінка від 1 до 5';
+    ratingInput.classList.add('error');
+    ratingInput.classList.remove('valid');
+    return false;
+  }
+
+  document.getElementById('ratingError').textContent = '';
+  ratingInput.classList.remove('error');
+  ratingInput.classList.add('valid');
+  return true;
+}
+
+function validateComment() {
+  if (commentInput.value.length < 10) {
+    document.getElementById('commentError').textContent =
+      'Мінімум 10 символів';
+    commentInput.classList.add('error');
+    commentInput.classList.remove('valid');
+    return false;
+  }
+
+  document.getElementById('commentError').textContent = '';
+  commentInput.classList.remove('error');
+  commentInput.classList.add('valid');
+  return true;
+}
+
+ratingInput.addEventListener('input', validateRating);
+commentInput.addEventListener('input', validateComment);
+
+document.getElementById('reviewForm')
+.addEventListener('submit', async (e) => {
+
+  e.preventDefault();
+
+  document.getElementById('serverErrors').innerHTML = '';
+
+  if (!validateRating() || !validateComment()) return;
+
+  const response = await fetch(
+    `${API_URL}/api/courses/${courseId}/reviews`,
+    {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        rating: Number(ratingInput.value),
+        comment: commentInput.value
+      })
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const container = document.getElementById('serverErrors');
+    const msgs = data.errors || [data.message];
+
+    container.innerHTML =
+      msgs.map(m => `<p>${m}</p>`).join('');
+
+    return;
+  }
+  alert('Відгук успішно створено');
+  window.location.href = '/index.html';
+});
+
+</script>
+
+</body>
+</html>

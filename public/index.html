@@ -49,7 +49,11 @@
           <strong>${course.name}</strong><br>
           Категорія: ${course.category}<br>
           Ціна: ${course.price}<br>
-          Опис: ${course.description || 'Опис відсутній'}
+          Опис: ${course.description || 'Опис відсутній'}<br>
+
+          <a href="/review.html?courseId=${course._id}">
+            Залишити відгук
+          </a>
         </li>
         <br>
       `).join('');
